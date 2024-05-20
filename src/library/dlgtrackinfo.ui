@@ -216,10 +216,13 @@
           <item row="3" column="2" colspan="2">
            <widget class="WStarRating" name="starRating">
             <property name="mouseTracking">
-              <bool>true</bool>
+             <bool>true</bool>
+            </property>
+            <property name="upDownChangesFocus">
+             <bool>true</bool>
             </property>
             <property name="focusPolicy">
-              <enum>Qt::StrongFocus</enum>
+             <enum>Qt::StrongFocus</enum>
             </property>
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
