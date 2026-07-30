@@ -5,14 +5,17 @@
 #include <spa/utils/defs.h>
 
 #include <QObject>
+#include <cstdint>
 
 #include "audio/types.h"
+#include "control/controlobject.h"
 #include "preferences/usersettings.h"
 #include "soundio/sounddevice.h"
 #include "soundio/sounddeviceenumerator.h"
 #include "soundio/sounddevicepipewire.h"
 #include "soundio/soundmanager.h"
 #include "soundio/soundmanagerconfig.h"
+#include "soundio/soundmanagerutil.h"
 
 class PipewireEnumerator : public SoundDeviceEnumerator {
     Q_OBJECT
@@ -32,7 +35,12 @@ class PipewireEnumerator : public SoundDeviceEnumerator {
     void deinitialize() override;
 
     bool isOpen(uint32_t id);
-    std::string openDevice(const SoundDevicePipewire& device,
+    std::string openDeviceInput(uint32_t id,
+            const AudioInput& input,
+            mixxx::audio::SampleRate sampleRate,
+            SINT framesPerBuffer);
+    std::string openDeviceOutput(uint32_t id,
+            const AudioOutput& output,
             mixxx::audio::SampleRate sampleRate,
             SINT framesPerBuffer);
     void closeDevice(uint32_t id);
@@ -45,6 +53,8 @@ class PipewireEnumerator : public SoundDeviceEnumerator {
         return {SoundManagerConfig::kAPIPipewire};
     }
 
+    QString getChannelString(uint32_t id, ChannelGroup channelGroup, bool input) const;
+
   signals:
     void deviceAdded(SoundDevicePointer pDevice);
     void deviceRemoved(SoundDevicePointer pDevice);
@@ -54,6 +64,72 @@ class PipewireEnumerator : public SoundDeviceEnumerator {
     void registerOutput(const AudioOutput& output, AudioSource* src);
 
   private:
+    struct Link {
+        uint32_t input;
+        uint32_t output;
+    };
+
+    struct Port {
+        uint32_t node;
+        bool isInput;
+        std::vector<uint32_t> links;
+
+        std::string getDisplayName() const {
+            return name + channel;
+        }
+
+        // this is port.name after stripping out channel and delimiter,
+        // and appending a ':' to simplify logic
+        std::string name;
+        // in case port had no recognizable channel, entire name is put
+        // here so SoundDevicePipewire::getChannelString logic works fine
+        std::string channel;
+    };
+
+    struct Node {
+        std::vector<uint32_t> inputs;
+        std::vector<uint32_t> outputs;
+    };
+
+    struct PortPair {
+        struct Port {
+            void* data;
+            uint32_t id;
+        };
+
+        struct ConnectedDevice {
+            std::vector<uint32_t> leftPorts;
+            std::vector<uint32_t> rightPorts;
+        };
+
+        // Registry for all connections to a PortPair, including devices which
+        // are not shown on Preference page, but might become "visible" after
+        // the visible device is removed
+        std::unordered_map<uint32_t, ConnectedDevice> connectedDevices;
+        // the visible device of the registry, what is shown on deviceComboBox
+        uint32_t activeDevice = 0;
+
+        Port left;
+        Port right;
+        std::atomic<bool> active = false;
+
+        // add/remove port and return if visible device might have changed
+        bool addPort(uint32_t deviceId, uint32_t portId, bool isLeft);
+        bool removePort(uint32_t deviceId, uint32_t portId, bool isLeft);
+
+        // Compute if current connections have a presentable device/channel representation
+        // Blank channelComboBox represents non presentable config (non contiguous connections
+        // or multiple devices).
+
+        // These are separate functions because we consider different conditions
+        // for mono connections. For inputs, mono connection is one device output
+        // port connected to both left and right input ports, while for outputs,
+        // mono connection is one L/R output port connected to same L/R input
+        // device port
+        ChannelGroup inputChannel(std::span<const uint32_t> ports);
+        ChannelGroup outputChannel(std::span<const uint32_t> ports);
+    };
+
     static void coreEventError(void* data, uint32_t id, int seq, int res, const char* message) {
         static_cast<PipewireEnumerator*>(data)->coreEventError(id, seq, res, message);
     }
@@ -144,23 +220,18 @@ class PipewireEnumerator : public SoundDeviceEnumerator {
 
     void updateAudioLatencyUsage(const SINT framesPerBuffer);
     void setLatency(unsigned int sampleRate, unsigned int framesPerBuffer);
-    std::pair<uint32_t*, uint32_t*> createInputPorts(const AudioInput& path);
-    std::pair<uint32_t*, uint32_t*> createOutputPorts(const AudioOutput& path);
-    std::pair<uint32_t*, uint32_t*> createPorts(std::string_view name, spa_direction direction);
 
-    struct Link {
-        uint32_t input;
-        uint32_t output;
-    };
+    void createInputPorts(const AudioInput& path, PortPair& ports);
+    void createOutputPorts(const AudioOutput& path, PortPair& ports);
+    void createPorts(PortPair& ports, std::string_view name, spa_direction direction);
+    void closePorts(PortPair& ports, bool isInput);
 
-    struct Port {
-        uint32_t node;
-    };
+    void updateFilterLatency(unsigned int sampleRate, unsigned int framesPerBuffer);
+    bool nodeHasPorts(const Node& node);
 
-    struct Node {};
-    using Object = std::variant<Node, Port, Link>;
-
-    std::unordered_map<uint32_t, Object> m_objects;
+    std::unordered_map<uint32_t, Node> m_nodes;
+    std::unordered_map<uint32_t, Port> m_ports;
+    std::unordered_map<uint32_t, Link> m_links;
     QList<mixxx::audio::SampleRate> m_samplerates;
 
     SoundManager* m_pSoundManager;
@@ -178,7 +249,6 @@ class PipewireEnumerator : public SoundDeviceEnumerator {
     spa_hook m_pwMetadataListener;
 
     std::unordered_map<uint32_t, QSharedPointer<SoundDevicePipewire>> m_soundDevices;
-    std::vector<uint32_t> m_openedDevices;
 
     uint64_t xrun_duration;
     int m_invalidTimeInfoCount;
@@ -187,12 +257,19 @@ class PipewireEnumerator : public SoundDeviceEnumerator {
     mixxx::audio::SampleRate m_sampleRate;
     mixxx::audio::SampleRate m_defaultSampleRate;
 
-    QHash<AudioInput, std::pair<uint32_t*, uint32_t*>> m_inputs;
-    QHash<AudioOutput, std::pair<uint32_t*, uint32_t*>> m_outputs;
+    std::unordered_map<AudioInput, PortPair> m_inputs;
+    std::unordered_map<AudioOutput, PortPair> m_outputs;
 
     PollingControlProxy m_audioLatencyUsage;
+    ControlObject m_COmanageExternalLinks;
     mixxx::Duration m_timeInAudioCallback;
     int m_framesSinceAudioLatencyUsageUpdate;
     uint32_t m_filterId;
     uint32_t m_framesPerBuffer;
+    // Handle all connections made to/from Mixxx node
+    // If we do not, then we only track connections made in the
+    // preference page, and leave the external patchbay connections
+    // If we do, then all connections to Mixxx will be affected, even
+    // the ones made with external patchbay
+    bool m_manageExternalLinks;
 };
