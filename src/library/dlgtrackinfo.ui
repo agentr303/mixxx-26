@@ -49,9 +49,8 @@
       </attribute>
       <layout class="QVBoxLayout" name="summary_layout" stretch="1,0,0">
        <item>
-        <widget class="QGroupBox" name="groupBox">
+        <widget class="QGroupBox" name="metadata_groupBox">
          <layout class="QGridLayout" name="tags_layout" columnstretch="0,10,0,2">
-
           <item row="0" column="0">
            <widget class="QLabel" name="lblTitle">
             <property name="sizePolicy">
@@ -102,8 +101,14 @@
              <property name="spacing">
               <number>0</number>
              </property>
+             <property name="margin">
+              <number>0</number>
+             </property>
              <property name="sizeConstraint">
               <enum>QLayout::SetDefaultConstraint</enum>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignVCenter</set>
              </property>
             </layout>
            </widget>
@@ -209,7 +214,16 @@
           </item>
 
           <item row="3" column="2" colspan="2">
-           <widget class="QWidget" name="verticalWidgetStars" native="true">
+           <widget class="WStarRating" name="starRating">
+            <property name="mouseTracking">
+             <bool>true</bool>
+            </property>
+            <property name="upDownChangesFocus">
+             <bool>true</bool>
+            </property>
+            <property name="focusPolicy">
+             <enum>Qt::StrongFocus</enum>
+            </property>
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
               <horstretch>0</horstretch>
@@ -220,8 +234,14 @@
              <property name="spacing">
               <number>0</number>
              </property>
+             <property name="margin">
+              <number>0</number>
+             </property>
              <property name="sizeConstraint">
               <enum>QLayout::SetDefaultConstraint</enum>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignVCenter</set>
              </property>
             </layout>
            </widget>
@@ -485,9 +505,24 @@
            </widget>
           </item>
           <item row="8" column="1" colspan="3">
-           <widget class="QPlainTextEdit" name="txtComment">
+           <widget class="WMultiLineTextEdit" name="txtComment">
             <property name="tabChangesFocus">
              <bool>true</bool>
+            </property>
+            <property name="upDownChangesFocus">
+             <bool>true</bool>
+            </property>
+            <property name="horizontalScrollBarPolicy">
+             <enum>Qt::ScrollBarAlwaysOff</enum>
+            </property>
+            <property name="verticalScrollBarPolicy">
+             <enum>Qt::ScrollBarAsNeeded</enum>
+            </property>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
             </property>
            </widget>
           </item>
@@ -505,7 +540,7 @@
           <item row="9" column="1" colspan="3">
            <widget class="QPushButton" name="btnColorPicker">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -528,18 +563,36 @@
           </item>
 
           <item row="11" column="0" colspan="4">
-           <layout class="QHBoxLayout" name="meatdata_buttons_layout">
+           <layout class="QHBoxLayout" name="metadata_buttons_layout">
             <item>
-             <widget class="QPushButton" name="btnImportMetadataFromMusicBrainz">
+             <widget class="WBasicPushButton" name="btnImportMetadataFromMusicBrainz">
               <property name="text">
                <string>Import Metadata from MusicBrainz</string>
+              </property>
+              <property name="elideMode">
+                <enum>Qt::ElideLeft</enum>
+               </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="btnImportMetadataFromFile">
+             <widget class="WBasicPushButton" name="btnImportMetadataFromFile">
               <property name="text">
                <string>Re-Import Metadata from file</string>
+              </property>
+              <property name="elideMode">
+               <enum>Qt::ElideLeft</enum>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
               </property>
              </widget>
             </item>
@@ -584,15 +637,15 @@
            </widget>
           </item>
 
-          <item row="0" column="2">
-           <widget class="QLabel" name="lblType">
+          <item row="1" column="0">
+           <widget class="QLabel" name="lblBpm">
             <property name="text">
-             <string>Filetype:</string>
+             <string>BPM:</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="3">
-           <widget class="QLabel" name="txtType">
+          <item row="1" column="1">
+           <widget class="QLabel" name="txtBpm">
             <property name="font">
              <font>
               <weight>75</weight>
@@ -608,15 +661,63 @@
            </widget>
           </item>
 
-          <item row="1" column="0">
-           <widget class="QLabel" name="lblBpm">
+          <item row="2" column="0">
+           <widget class="QLabel" name="lblDateAdded">
             <property name="text">
-             <string>BPM:</string>
+             <string>Date added:</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="1">
-           <widget class="QLabel" name="txtBpm">
+          <item row="2" column="1">
+           <widget class="QLabel" name="txtDateAdded">
+            <property name="font">
+             <font>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="textInteractionFlags">
+             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+            </property>
+           </widget>
+          </item>
+
+          <item row="3" column="0">
+           <widget class="QLabel" name="lblReplayGain">
+            <property name="text">
+             <string>ReplayGain:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QLabel" name="txtReplayGain">
+            <property name="font">
+             <font>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="textInteractionFlags">
+             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+            </property>
+           </widget>
+          </item>
+
+          <item row="0" column="2">
+           <widget class="QLabel" name="lblType">
+            <property name="text">
+             <string>Filetype:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QLabel" name="txtType">
             <property name="font">
              <font>
               <weight>75</weight>
@@ -656,30 +757,6 @@
            </widget>
           </item>
 
-          <item row="2" column="0">
-           <widget class="QLabel" name="lblReplayGain">
-            <property name="text">
-             <string>ReplayGain:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QLabel" name="txtReplayGain">
-            <property name="font">
-             <font>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="textInteractionFlags">
-             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
-            </property>
-           </widget>
-          </item>
-
           <item row="2" column="2">
            <widget class="QLabel" name="lblSamplerate">
             <property name="text">
@@ -689,27 +766,6 @@
           </item>
           <item row="2" column="3">
            <widget class="QLabel" name="txtSamplerate">
-            <property name="font">
-             <font>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-
-          <item row="3" column="0">
-           <widget class="QLabel" name="lblDateAdded">
-            <property name="text">
-             <string>Date added:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1">
-           <widget class="QLabel" name="txtDateAdded">
             <property name="font">
              <font>
               <weight>75</weight>
@@ -973,7 +1029,7 @@ Often results in higher quality beatgrids, but will not do well on tracks that h
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="bpmClear">
+        <widget class="WBasicPushButton" name="bpmClear">
          <property name="text">
           <string>Clear BPM and Beatgrid</string>
          </property>
@@ -1118,6 +1174,23 @@ Often results in higher quality beatgrids, but will not do well on tracks that h
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>WBasicPushButton</class>
+   <extends>QPushButton</extends>
+   <header>widget/wbasicpushbutton.h</header>
+  </customwidget>
+  <customwidget>
+   <class>WMultiLineTextEdit</class>
+   <extends>QLineEdit</extends>
+   <header>widget/wmultilinetextedit.h</header>
+  </customwidget>
+  <customwidget>
+   <class>WStarRating</class>
+   <extends>QWidget</extends>
+   <header>widget/wstarrating.h</header>
+  </customwidget>
+ </customwidgets>
  <tabstops>
   <tabstop>tabWidget</tabstop>
   <tabstop>txtTitle</tabstop>
@@ -1125,16 +1198,26 @@ Often results in higher quality beatgrids, but will not do well on tracks that h
   <tabstop>txtAlbum</tabstop>
   <tabstop>txtAlbumArtist</tabstop>
   <tabstop>txtComposer</tabstop>
-  <tabstop>txtYear</tabstop>
   <tabstop>txtGenre</tabstop>
-  <tabstop>txtTrackNumber</tabstop>
   <tabstop>txtGrouping</tabstop>
+  <tabstop>txtComment</tabstop>
+  <tabstop>starRating</tabstop>
+  <tabstop>txtYear</tabstop>
+  <tabstop>txtTrackNumber</tabstop>
   <tabstop>txtKey</tabstop>
   <tabstop>spinTuning</tabstop>
-  <tabstop>txtComment</tabstop>
-  <tabstop>btnColorPicker</tabstop>
   <tabstop>btnImportMetadataFromMusicBrainz</tabstop>
   <tabstop>btnImportMetadataFromFile</tabstop>
+  <tabstop>btnColorPicker</tabstop>
+  <tabstop>txtDuration</tabstop>
+  <tabstop>txtBpm</tabstop>
+  <tabstop>txtDateAdded</tabstop>
+  <tabstop>txtReplayGain</tabstop>
+  <tabstop>txtType</tabstop>
+  <tabstop>txtBitrate</tabstop>
+  <tabstop>txtSamplerate</tabstop>
+  <tabstop>txtFileSize</tabstop>
+  <tabstop>txtLocation</tabstop>
   <tabstop>btnOpenFileBrowser</tabstop>
   <tabstop>spinBpm</tabstop>
   <tabstop>bpmConst</tabstop>
