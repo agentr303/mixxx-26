@@ -1,5 +1,6 @@
 #include "library/dlgtrackinfo.h"
 
+#include <QShortcut>
 #include <QSignalBlocker>
 #include <QStyleFactory>
 #include <QtDebug>
@@ -104,6 +105,18 @@ void DlgTrackInfo::init() {
                 &QPushButton::clicked,
                 this,
                 &DlgTrackInfo::slotPrevButton);
+
+        QShortcut* nextShortcut = new QShortcut(QKeySequence("Alt+Right"), this);
+        QShortcut* prevShortcut = new QShortcut(QKeySequence("Alt+Left"), this);
+
+        connect(nextShortcut,
+                &QShortcut::activated,
+                btnNext,
+                [this] { btnNext->animateClick(); });
+        connect(prevShortcut,
+                &QShortcut::activated,
+                btnPrev,
+                [this] { btnPrev->animateClick(); });
     } else {
         btnNext->hide();
         btnPrev->hide();
@@ -356,21 +369,42 @@ void DlgTrackInfo::slotPrevDlgTagFetcher() {
     loadPrevTrack();
 }
 
+QModelIndex DlgTrackInfo::getPrevNextTrack(bool next) {
+    return m_currentTrackIndex.sibling(
+            m_currentTrackIndex.row() + (next ? 1 : -1),
+            m_currentTrackIndex.column());
+}
+
 void DlgTrackInfo::loadNextTrack() {
-    auto nextRow = m_currentTrackIndex.sibling(
-            m_currentTrackIndex.row() + 1, m_currentTrackIndex.column());
+    auto nextRow = getPrevNextTrack(true);
     if (nextRow.isValid()) {
         loadTrack(nextRow);
+        refocusCurrentWidget();
         emit next();
     }
 }
 
 void DlgTrackInfo::loadPrevTrack() {
-    QModelIndex prevRow = m_currentTrackIndex.sibling(
-            m_currentTrackIndex.row() - 1, m_currentTrackIndex.column());
+    auto prevRow = getPrevNextTrack(false);
     if (prevRow.isValid()) {
         loadTrack(prevRow);
+        refocusCurrentWidget();
         emit previous();
+    }
+}
+
+/// Simulate moving the focus out of and then back into the currently
+/// focused widget to trigger behaviors like the "Select all on focus"
+/// for QLineEdit.
+///
+/// This is done when moving to the previous/next track, because,
+/// logically, the user has moved to a new dialog, even though we
+/// reuse the current dialog instance internally.
+void DlgTrackInfo::refocusCurrentWidget() {
+    QWidget* focusedWidget = QApplication::focusWidget();
+    if (focusedWidget && isAncestorOf(focusedWidget)) {
+        focusedWidget->clearFocus();
+        focusedWidget->setFocus(Qt::ShortcutFocusReason);
     }
 }
 
@@ -557,6 +591,9 @@ void DlgTrackInfo::loadTrack(const QModelIndex& index) {
         return;
     }
     m_currentTrackIndex = index;
+    btnPrev->setEnabled(getPrevNextTrack(false).isValid());
+    btnNext->setEnabled(getPrevNextTrack(true).isValid());
+
     loadTrackInternal(pTrack);
     if (m_pDlgTagFetcher && m_pDlgTagFetcher->isVisible()) {
         m_pDlgTagFetcher->loadTrack(m_currentTrackIndex);
