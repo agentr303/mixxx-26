@@ -1191,15 +1191,15 @@ Often results in higher quality beatgrids, but will not do well on tracks that h
   <tabstop>txtArtist</tabstop>
   <tabstop>txtAlbum</tabstop>
   <tabstop>txtAlbumArtist</tabstop>
-  <tabstop>starRating</tabstop>
   <tabstop>txtComposer</tabstop>
-  <tabstop>txtYear</tabstop>
   <tabstop>txtGenre</tabstop>
-  <tabstop>txtTrackNumber</tabstop>
   <tabstop>txtGrouping</tabstop>
+  <tabstop>txtComment</tabstop>
+  <tabstop>starRating</tabstop>
+  <tabstop>txtYear</tabstop>
+  <tabstop>txtTrackNumber</tabstop>
   <tabstop>txtKey</tabstop>
   <tabstop>spinTuning</tabstop>
-  <tabstop>txtComment</tabstop>
   <tabstop>btnImportMetadataFromMusicBrainz</tabstop>
   <tabstop>btnImportMetadataFromFile</tabstop>
   <tabstop>btnColorPicker</tabstop>
