@@ -455,7 +455,9 @@ void ControllerManager::slotApplyMapping(Controller* pController,
                     },
                     Qt::QueuedConnection);
         }
-    
+    } else {
+        emit mappingApplied(false);
+    }
 }
 
 // static
