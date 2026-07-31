@@ -12,6 +12,7 @@
 // Forward declaration(s)
 class Controller;
 class ControllerLearningEventFilter;
+class MidiClockOutputManager;
 class MappingInfoEnumerator;
 class LegacyControllerMapping;
 class ControllerEnumerator;
@@ -43,6 +44,9 @@ class ControllerManager : public QObject {
     void setUpDevices() { emit requestSetUpDevices(); };
 
     static QList<QString> getMappingPaths(UserSettingsPointer pConfig);
+    void setMidiClockOutputManager(MidiClockOutputManager* pManager) {
+        m_pMidiClockOutputManager = pManager;
+    }
 
   signals:
     void devicesChanged();
@@ -75,6 +79,7 @@ class ControllerManager : public QObject {
     void pollIfAnyControllersOpen();
     void openController(Controller* pController);
     void closeController(Controller* pController);
+    MidiClockOutputManager* m_pMidiClockOutputManager{nullptr};
 
     UserSettingsPointer m_pConfig;
     ControllerLearningEventFilter* m_pControllerLearningEventFilter;
