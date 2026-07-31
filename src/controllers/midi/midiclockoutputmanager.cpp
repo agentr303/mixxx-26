@@ -12,15 +12,6 @@
 #include "control/controlpushbutton.h"
 
 namespace {
-// NOTE ON THE "[Master]" TEMPO SOURCE ENTRY:
-// EngineSync keeps "[InternalClock]", "bpm" tracking the current sync
-// leader's tempo whenever any deck is leading, and the internal
-// clock's own tempo when nothing is (e.g. all decks synced but
-// stopped, or the internal clock itself is the leader). This makes it
-// a convenient always-available "current session tempo" source. If
-// your checkout's control key differs, update kMasterTempoGroup /
-// kMasterTempoKey below -- this is the one place in this file that is
-// most likely to need adjustment across Mixxx versions.
 const QString kMasterTempoGroup = QStringLiteral("[InternalClock]");
 const QString kMasterTempoKey = QStringLiteral("bpm");
 const QString kMasterSourceName = QStringLiteral("[Master]");
@@ -28,11 +19,6 @@ const QString kMasterSourceName = QStringLiteral("[Master]");
 const QString kPlayKey = QStringLiteral("play");
 const QString kBpmKey = QStringLiteral("bpm");
 
-// How long before a scheduled tick's timestamp we wake up to prepare
-// the send. Waking early and spin-waiting the last stretch trades a
-// little CPU for much better precision than relying solely on OS
-// sleep granularity (which is commonly 1-15 ms depending on platform
-// and power state).
 constexpr auto kWakeAheadMargin = std::chrono::microseconds(800);
 constexpr auto kSpinThreshold = std::chrono::microseconds(200);
 } // namespace
@@ -43,11 +29,11 @@ MidiClockOutputManager::MidiClockOutputManager(ControllerManager* pControllerMan
           m_deviceExplicitlySet(false),
           m_stopSenderThread(false) {
     m_senderThread = std::thread(&MidiClockOutputManager::senderThreadMain, this);
-                m_pEnabledControl = std::make_unique<ControlPushButton>(ConfigKey("[MidiClock]", "enabled"));
-       m_pEnabledControl->setButtonMode(mixxx::control::ButtonMode::Toggle);
-       connect(m_pEnabledControl.get(), &ControlObject::valueChanged, this, [this](double value) {
-       setEnabled(value > 0.0);
-   });
+    m_pEnabledControl = std::make_unique<ControlPushButton>(ConfigKey("[MidiClock]", "enabled"));
+    m_pEnabledControl->setButtonMode(mixxx::control::ButtonMode::Toggle);
+    connect(m_pEnabledControl.get(), &ControlObject::valueChanged, this, [this](double value) {
+        setEnabled(value > 0.0);
+    });
 }
 
 MidiClockOutputManager::~MidiClockOutputManager() {
@@ -62,11 +48,6 @@ QStringList MidiClockOutputManager::availableOutputDevices() const {
     if (!m_pControllerManager) {
         return result;
     }
-    // NOTE: getControllerList()/isOpen() reflect the API at the time
-    // this feature was written. If ControllerManager's accessor names
-    // differ in your checkout, adjust this loop accordingly -- the
-    // logic (list controllers, keep the MIDI ones with an open output)
-    // stays the same.
     const auto controllers = m_pControllerManager->getControllerList();
     for (auto* pController : controllers) {
         auto* pMidiController = qobject_cast<MidiController*>(pController);
@@ -80,8 +61,6 @@ QStringList MidiClockOutputManager::availableOutputDevices() const {
 QStringList MidiClockOutputManager::availableTempoSources() const {
     QStringList result;
     result << kMasterSourceName;
-    // Decks: adjust the range/group naming if your build supports a
-    // different deck count or naming scheme (e.g. more than 4 decks).
     for (int i = 1; i <= 4; ++i) {
         result << QStringLiteral("[Channel%1]").arg(i);
     }
@@ -146,12 +125,6 @@ void MidiClockOutputManager::rebuildTempoSourceConnections() {
     m_pBpmControl->connectValueChanged(this, &MidiClockOutputManager::slotSourceBpmChanged);
 
     if (m_tempoSourceGroup == kMasterSourceName) {
-        // The synthetic "Master" source has no single deck play
-        // state; treat the clock as always "playing" and rely on the
-        // Start/Stop/Continue toggle in preferences if the user wants
-        // transport messages suppressed while nothing is playing.
-        // A more complete implementation could OR together every
-        // deck's [ChannelN] play control here.
         m_generator.setPlaying(true);
     } else {
         m_pPlayControl = std::make_unique<ControlProxy>(group, kPlayKey, this);
@@ -173,18 +146,7 @@ void MidiClockOutputManager::slotSourcePlayChanged(double play) {
 }
 
 void MidiClockOutputManager::senderThreadMain() {
-    // This thread does two things, deliberately kept separate from
-    // both the audio thread (which must never block) and the GUI
-    // thread (which must never be blocked waiting on us): it sleeps
-    // until each queued tick's scheduled time, then hands the byte
-    // off to the selected MidiController.
-    //
-    // Raise this thread's priority if the platform allows it -- a
-    // clock thread that gets pre-empted by, say, a library scan is
-    // exactly the jitter source this feature exists to avoid.
 #if defined(Q_OS_LINUX) || defined(Q_OS_MAC)
-    // Best-effort; requires appropriate privileges/rlimits on Linux.
-    // Silently no-ops if unavailable.
     QThread::currentThread()->setPriority(QThread::TimeCriticalPriority);
 #endif
 
@@ -196,10 +158,6 @@ void MidiClockOutputManager::senderThreadMain() {
             continue;
         }
 
-        // Sleep until (timestamp - margin), then spin the last little
-        // bit for precision. std::this_thread::sleep_until is used
-        // rather than sleep_for to avoid accumulating drift from the
-        // time spent handling the previous event.
         const auto wakeTime = event.timestamp - kWakeAheadMargin;
         if (wakeTime > std::chrono::steady_clock::now()) {
             std::this_thread::sleep_until(wakeTime);
@@ -227,12 +185,10 @@ void MidiClockOutputManager::senderThreadMain() {
             continue;
         }
 
-        // Marshal the actual send onto the controller's own thread via
-        // a queued connection, since MidiController I/O is not
-        // guaranteed thread-safe to call directly from an arbitrary
-        // thread. On an idle controller thread this adds well under a
-        // millisecond; if your checkout's MidiController exposes a
-        // send method that IS documented safe to call from any
-        // thread, calling it directly here removes that margin.
         const unsigned char byte = event.byte;
         QMetaObject::invokeMethod(
+                pTarget,
+                [pTarget, byte]() { pTarget->sendRealTimeByte(byte); },
+                Qt::QueuedConnection);
+    }
+}
