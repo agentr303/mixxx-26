@@ -62,6 +62,16 @@ class MidiController : public Controller {
     bool matchMapping(const MappingInfo& mapping) override;
     bool removeInputMapping(uint16_t key, const MidiInputMapping& mapping);
 
+    // Public wrapper so non-scripting code (e.g. MidiClockOutputManager)
+    // can send single-byte MIDI Real-Time messages (0xF8 Clock, 0xFA
+    // Start, 0xFB Continue, 0xFC Stop) without going through the JS
+    // scripting engine. sendShortMsg() below is protected and always
+    // sends 3 bytes; real-time messages are a single status byte with
+    // no data bytes, so we pad with zeros.
+    void sendRealTimeByte(unsigned char status) {
+        sendShortMsg(status, 0, 0);
+    }
+
   signals:
     void messageReceived(unsigned char status, unsigned char control, unsigned char value);
 
