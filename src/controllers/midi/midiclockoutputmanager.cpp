@@ -192,3 +192,5 @@ void MidiClockOutputManager::senderThreadMain() {
                 Qt::QueuedConnection);
     }
 }
+
+#include "moc_midiclockoutputmanager.cpp"
