@@ -437,16 +437,24 @@ void ControllerManager::slotApplyMapping(Controller* pController,
 
     // Save the file path/name in the config so it can be auto-loaded at
     // startup next time
-    m_pConfig->set(key, pMapping->filePath());
+    const QString mappingFilePath = pMapping->filePath();
+    m_pConfig->set(key, mappingFilePath);
 
     pController->setMapping(std::move(pMapping));
-
     if (bEnabled) {
         openController(pController);
         emit mappingApplied(pController->isMappable());
+        if (m_pMidiClockOutputManager) {
+            QMetaObject::invokeMethod(m_pMidiClockOutputManager,
+                    "onControllerMappingLoaded",
+                    Qt::QueuedConnection,
+                    Q_ARG(QString, pController->getName()),
+                    Q_ARG(QString, mappingFilePath));
+        }
     } else {
         emit mappingApplied(false);
     }
+    
 }
 
 // static
