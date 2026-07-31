@@ -30,6 +30,7 @@
 #include "moc_coreservices.cpp"
 #include "preferences/dialog/dlgpreferences.h"
 #include "preferences/settingsmanager.h"
+#include "controllers/midi/midiclockoutputmanager.h"
 #ifdef __MODPLUG__
 #include "preferences/dialog/dlgprefmodplug.h"
 #endif
@@ -287,6 +288,8 @@ void CoreServices::initialize(QApplication* pApp) {
             m_pEffectsManager.get(),
             pChannelHandleFactory,
             true);
+    m_pMidiClockOutputManager = std::make_shared<MidiClockOutputManager>(nullptr);
+    m_pEngine->setMidiClockGenerator(m_pMidiClockOutputManager->generator());
 #ifdef __RUBBERBAND__
     RubberBandWorkerPool::createInstance(pConfig);
 #endif
@@ -427,6 +430,9 @@ void CoreServices::initialize(QApplication* pApp) {
     // (long)
     qDebug() << "Creating ControllerManager";
     m_pControllerManager = std::make_shared<ControllerManager>(pConfig);
+    m_pMidiClockOutputManager = std::make_shared<MidiClockOutputManager>(m_pControllerManager.get());
+    m_pEngine->setMidiClockGenerator(m_pMidiClockOutputManager->generator());
+    m_pControllerManager->setMidiClockOutputManager(m_pMidiClockOutputManager.get());
 
     // Scan the library for new files and directories
     bool rescan = m_cmdlineArgs.getRescanLibrary() ||
@@ -616,6 +622,7 @@ std::shared_ptr<QDialog> CoreServices::makeDlgPreferences() const {
             nullptr,
             getSoundManager(),
             getControllerManager(),
+            getMidiClockOutputManager(),
             getVinylControlManager(),
             getEffectsManager(),
             getSettingsManager(),
