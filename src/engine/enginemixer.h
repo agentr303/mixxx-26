@@ -31,6 +31,7 @@ class EngineEffectsManager;
 class EngineSync;
 class EngineTalkoverDucking;
 class EngineDelay;
+class MidiClockGenerator;
 
 // The number of channels to pre-allocate in various structures in the
 // engine. Prevents memory allocation in EngineMixer::addChannel.
@@ -69,6 +70,9 @@ class EngineMixer : public QObject, public AudioSource {
     void onInputDisconnected(const AudioInput& input);
 
     void process(const std::size_t bufferSize);
+    void setMidiClockGenerator(MidiClockGenerator* pGenerator) {
+        m_pMidiClockGenerator = pGenerator;
+    }
 
     // Add an EngineChannel to the mixing engine. This is not thread safe --
     // only call it before the engine has started mixing.
@@ -254,6 +258,7 @@ class EngineMixer : public QObject, public AudioSource {
     // m_activeTalkoverChannels with each channel that is active for the
     // respective output.
     void processChannels(std::size_t bufferSize);
+    MidiClockGenerator* m_pMidiClockGenerator{nullptr};
 
     ChannelHandleFactoryPointer m_pChannelHandleFactory;
     void applyMainEffects(std::size_t bufferSize);
