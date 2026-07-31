@@ -76,4 +76,27 @@ class MidiClockGenerator {
         return &m_queue;
     }
 
-    // Resets phase and forces the next call to
+    // Resets phase and forces the next call to process() to emit a
+    // Start (0xFA) message. Call this when the user changes the tempo
+    // source or re-enables the clock, so downstream gear resyncs
+    // phase cleanly instead of picking up ticks mid-beat.
+    void requestRealign();
+
+  private:
+    MidiClockQueue m_queue;
+
+    std::atomic<bool> m_enabled;
+    std::atomic<bool> m_sendTransport;
+    std::atomic<double> m_bpm;
+    std::atomic<bool> m_playing;
+    std::atomic<bool> m_realignRequested;
+
+    // Audio-thread-only state (never touched from other threads).
+    bool m_wasEnabled;
+    bool m_wasPlaying;
+    // Fractional sample position within the current tick period.
+    // Kept as samples (not seconds) so it stays exact across buffers
+    // regardless of buffer-size jitter from the OS audio backend.
+    double m_samplesUntilNextTick;
+    double m_lastSamplesPerTick;
+};
