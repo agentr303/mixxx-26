@@ -4,6 +4,7 @@
 #include <QThread>
 
 #include "controllers/controller.h"
+#include "controllers/midi/midiclockoutputmanager.h"
 #include "controllers/controllerlearningeventfilter.h"
 #include "controllers/controllermappinginfoenumerator.h"
 #include "controllers/defs_controllers.h"
@@ -445,15 +446,15 @@ void ControllerManager::slotApplyMapping(Controller* pController,
         openController(pController);
         emit mappingApplied(pController->isMappable());
         if (m_pMidiClockOutputManager) {
-            QMetaObject::invokeMethod(m_pMidiClockOutputManager,
-                    "onControllerMappingLoaded",
-                    Qt::QueuedConnection,
-                    Q_ARG(QString, pController->getName()),
-                    Q_ARG(QString, mappingFilePath));
+            MidiClockOutputManager* pMidiClockOutputManager = m_pMidiClockOutputManager;
+            const QString controllerName = pController->getName();
+            QMetaObject::invokeMethod(pMidiClockOutputManager,
+                    [pMidiClockOutputManager, controllerName, mappingFilePath]() {
+                        pMidiClockOutputManager->onControllerMappingLoaded(
+                                controllerName, mappingFilePath);
+                    },
+                    Qt::QueuedConnection);
         }
-    } else {
-        emit mappingApplied(false);
-    }
     
 }
 
