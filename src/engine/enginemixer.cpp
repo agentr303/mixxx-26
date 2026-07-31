@@ -19,6 +19,7 @@
 #include "engine/enginexfader.h"
 #include "engine/sidechain/enginesidechain.h"
 #include "engine/sync/enginesync.h"
+#include "engine/sync/midiclockgenerator.h"
 #include "mixer/playermanager.h"
 #include "moc_enginemixer.cpp"
 #include "preferences/configobject.h"
@@ -372,12 +373,18 @@ void EngineMixer::process(const std::size_t bufferSize) {
     bool boothEnabled = m_pBoothEnabled->toBool();
     bool headphoneEnabled = m_pHeadphoneEnabled->toBool();
 
-    m_sampleRate = mixxx::audio::SampleRate::fromDouble(m_pSampleRate->get());
+   m_sampleRate = mixxx::audio::SampleRate::fromDouble(m_pSampleRate->get());
     // TODO: remove assumption of stereo buffer
     constexpr unsigned int kChannels = 2;
     const unsigned int iFrames = static_cast<unsigned int>(bufferSize) / kChannels;
 
+    if (m_pMidiClockGenerator) {
+        const auto bufferStartTime = std::chrono::steady_clock::now();
+        m_pMidiClockGenerator->process(m_sampleRate, static_cast<int>(iFrames), bufferStartTime);
+    }
+
     if (m_pEngineEffectsManager) {
+        
         m_pEngineEffectsManager->onCallbackStart();
     }
 
