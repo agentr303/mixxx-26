@@ -15,6 +15,8 @@
 #include "preferences/usersettings.h"
 
 class ControllerManager;
+class MidiClockOutputManager;
+class DlgPrefMidiClock;
 class DlgPrefControllers;
 class DlgPrefSound;
 class EffectsManager;
@@ -48,6 +50,7 @@ class DlgPreferences : public QDialog, public Ui::DlgPreferencesDlg {
             std::shared_ptr<mixxx::skin::SkinLoader> pSkinLoader,
             std::shared_ptr<SoundManager> pSoundManager,
             std::shared_ptr<ControllerManager> pControllerManager,
+            std::shared_ptr<MidiClockOutputManager> pMidiClockOutputManager,
             std::shared_ptr<VinylControlManager> pVCManager,
             std::shared_ptr<EffectsManager> pEffectsManager,
             std::shared_ptr<SettingsManager> pSettingsManager,
@@ -103,6 +106,7 @@ class DlgPreferences : public QDialog, public Ui::DlgPreferencesDlg {
     std::unique_ptr<DlgPrefSound> m_pSoundDlg;
     PreferencesPage m_soundPage;
     DlgPrefControllers* m_pControllersDlg;
+    DlgPrefMidiClock* m_pMidiClockDlg;
 
     QSize m_pageSizeHint;
 
