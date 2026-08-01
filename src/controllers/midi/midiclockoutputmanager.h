@@ -29,6 +29,7 @@
 #include "control/controlproxy.h"
 #include <memory>
 #include <thread>
+#include <vector>
 
 #include "engine/sync/midiclockgenerator.h"
 
@@ -78,6 +79,10 @@ class MidiClockOutputManager : public QObject {
   private slots:
     void slotSourceBpmChanged(double bpm);
     void slotSourcePlayChanged(double play);
+    // Recomputes whether any deck is playing whenever one of the
+    // per-deck play controls changes, for the synthetic "[Master]"
+    // tempo source (which has no single deck's play state of its own).
+    void slotAnyDeckPlayChanged(double play);
 
   private:
     void rebuildTempoSourceConnections();
@@ -99,6 +104,7 @@ class MidiClockOutputManager : public QObject {
 
     std::unique_ptr<ControlProxy> m_pBpmControl;
     std::unique_ptr<ControlProxy> m_pPlayControl;
+    std::vector<std::unique_ptr<ControlProxy>> m_masterPlayControls;
     std::unique_ptr<ControlPushButton> m_pEnabledControl;
 
     std::thread m_senderThread;
