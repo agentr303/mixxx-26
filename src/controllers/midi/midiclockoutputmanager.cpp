@@ -69,10 +69,10 @@ QStringList MidiClockOutputManager::availableTempoSources() const {
 
 void MidiClockOutputManager::setEnabled(bool enabled) {
     m_enabled = enabled;
-    m_generator.setEnabled(enabled);
     if (enabled) {
         rebuildTempoSourceConnections();
     }
+    m_generator.setEnabled(enabled);
 }
 
 void MidiClockOutputManager::setOutputDevice(const QString& deviceName) {
