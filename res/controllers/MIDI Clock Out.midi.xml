@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MixxxMIDIPreset schemaVersion="1" mixxxVersion="2.6+">
+  <info>
+    <name>MIDI Clock Out (sync tempo, no controls)</name>
+    <author></author>
+    <description>Sends MIDI clock (tempo sync) to this device. This mapping has no button/knob controls -- select it purely to turn on MIDI Clock Output for a device, such as a plain USB-MIDI interface feeding a DAW, groovebox, or modular rig. Configure tempo source and transport behavior in Preferences &gt; MIDI Clock Output.</description>
+  </info>
+  <controller id="Midi-Clock-Out" port="Port" sendMidiClock="1">
+    <controls>
+    </controls>
+  </controller>
+</MixxxMIDIPreset>
