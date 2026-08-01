@@ -112,6 +112,7 @@ void MidiClockOutputManager::setSendTransport(bool sendTransport) {
 void MidiClockOutputManager::rebuildTempoSourceConnections() {
     m_pBpmControl.reset();
     m_pPlayControl.reset();
+    m_masterPlayControls.clear();
 
     if (m_tempoSourceGroup.isEmpty()) {
         return;
@@ -125,7 +126,20 @@ void MidiClockOutputManager::rebuildTempoSourceConnections() {
     m_pBpmControl->connectValueChanged(this, &MidiClockOutputManager::slotSourceBpmChanged);
 
     if (m_tempoSourceGroup == kMasterSourceName) {
-        m_generator.setPlaying(true);
+        // The synthetic "Master" source has no single deck play state
+        // of its own -- watch every deck's play control and treat the
+        // clock as "playing" whenever at least one deck is.
+        bool anyPlaying = false;
+        for (int i = 1; i <= 4; ++i) {
+            const QString deckGroup = QStringLiteral("[Channel%1]").arg(i);
+            auto pPlayControl = std::make_unique<ControlProxy>(deckGroup, kPlayKey, this);
+            pPlayControl->connectValueChanged(this, &MidiClockOutputManager::slotAnyDeckPlayChanged);
+            if (pPlayControl->get() > 0.0) {
+                anyPlaying = true;
+            }
+            m_masterPlayControls.push_back(std::move(pPlayControl));
+        }
+        m_generator.setPlaying(anyPlaying);
     } else {
         m_pPlayControl = std::make_unique<ControlProxy>(group, kPlayKey, this);
         m_pPlayControl->connectValueChanged(this, &MidiClockOutputManager::slotSourcePlayChanged);
@@ -143,6 +157,18 @@ void MidiClockOutputManager::slotSourceBpmChanged(double bpm) {
 
 void MidiClockOutputManager::slotSourcePlayChanged(double play) {
     m_generator.setPlaying(play > 0.0);
+}
+
+void MidiClockOutputManager::slotAnyDeckPlayChanged(double play) {
+    Q_UNUSED(play);
+    bool anyPlaying = false;
+    for (const auto& pPlayControl : m_masterPlayControls) {
+        if (pPlayControl->get() > 0.0) {
+            anyPlaying = true;
+            break;
+        }
+    }
+    m_generator.setPlaying(anyPlaying);
 }
 
 void MidiClockOutputManager::senderThreadMain() {
