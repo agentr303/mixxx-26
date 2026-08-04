@@ -258,7 +258,7 @@ jobs:
           -DDOWNLOAD_MANUAL=ON
           -DHID=ON
           -DKEYFINDER=ON
-          -DLILV=ON
+          -DLILV=OFF
           -DOPUS=ON
           -DQTKEYCHAIN=ON
           -DVINYLCONTROL=ON
