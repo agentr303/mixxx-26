@@ -50,12 +50,12 @@ bool WWidget::event(QEvent* e) {
         }
     } else if (isEnabled()) {
         switch(e->type()) {
+ #ifndef __WINDOWS__
         case QEvent::TouchBegin:
         case QEvent::TouchUpdate:
         case QEvent::TouchEnd:
         {
-            #ifndef __WINDOWS__
-                QTouchEvent* touchEvent = dynamic_cast<QTouchEvent*>(e);
+            QTouchEvent* touchEvent = dynamic_cast<QTouchEvent*>(e);
             if (touchEvent == nullptr
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
                     || touchEvent->device() == nullptr ||
