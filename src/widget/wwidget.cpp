@@ -50,11 +50,13 @@ bool WWidget::event(QEvent* e) {
         }
     } else if (isEnabled()) {
         switch(e->type()) {
- #ifndef __WINDOWS__
         case QEvent::TouchBegin:
         case QEvent::TouchUpdate:
         case QEvent::TouchEnd:
         {
+#ifdef __WINDOWS__
+            break;
+#else
             QTouchEvent* touchEvent = dynamic_cast<QTouchEvent*>(e);
             if (touchEvent == nullptr
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -111,8 +113,8 @@ bool WWidget::event(QEvent* e) {
                     Qt::MouseEventSynthesizedByApplication);
 
             return QWidget::event(&mouseEvent);
+#endif
         }
-                #endif
         default:
             break;
         }
