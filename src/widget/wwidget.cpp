@@ -54,7 +54,8 @@ bool WWidget::event(QEvent* e) {
         case QEvent::TouchUpdate:
         case QEvent::TouchEnd:
         {
-            QTouchEvent* touchEvent = dynamic_cast<QTouchEvent*>(e);
+            #ifndef __WINDOWS__
+                QTouchEvent* touchEvent = dynamic_cast<QTouchEvent*>(e);
             if (touchEvent == nullptr
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
                     || touchEvent->device() == nullptr ||
@@ -111,6 +112,7 @@ bool WWidget::event(QEvent* e) {
 
             return QWidget::event(&mouseEvent);
         }
+                #endif
         default:
             break;
         }
