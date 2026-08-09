@@ -86,6 +86,8 @@ void MidiClockGenerator::process(int sampleRate,
     // since transport messages are not expected to be sample-locked
     // the way clock ticks are.
     if (!m_wasEnabled || realign) {
+        qWarning() << "MidiClockGenerator::process() -- (re)starting, sendTransport="
+                   << sendTransport << "playing=" << playing;
         m_samplesUntilNextTick = 0.0; // emit a tick immediately -> phase 0
         m_ticksSinceBeat = 0;
         m_beatsSinceBar = 0;
@@ -93,6 +95,7 @@ void MidiClockGenerator::process(int sampleRate,
             m_queue.push({bufferStartTime, kMidiStart});
         }
     } else if (sendTransport && playing != m_wasPlaying) {
+        qWarning() << "MidiClockGenerator::process() -- play state changed to" << playing;
         m_queue.push({bufferStartTime, playing ? kMidiStart : kMidiStop});
         if (playing) {
             // Re-align phase so the first tick after Continue lands
@@ -111,7 +114,7 @@ void MidiClockGenerator::process(int sampleRate,
     // messages entirely, the clock free-runs regardless of play
     // state, which is useful for gear you start/stop by hand.
     if (sendTransport && !playing) {
-        return;
+        return; // silent on purpose -- this branch is hit every buffer while stopped
     }
 
     const double bpm = m_bpm.load(std::memory_order_relaxed);
