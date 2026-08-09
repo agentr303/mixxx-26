@@ -68,6 +68,8 @@ QStringList MidiClockOutputManager::availableTempoSources() const {
 }
 
 void MidiClockOutputManager::setEnabled(bool enabled) {
+    qWarning() << "MidiClockOutputManager::setEnabled(" << enabled
+               << ") -- tempoSourceGroup is currently" << m_tempoSourceGroup;
     m_enabled = enabled;
     if (enabled) {
         rebuildTempoSourceConnections();
@@ -100,6 +102,7 @@ void MidiClockOutputManager::onControllerMappingLoaded(
 }
 
 void MidiClockOutputManager::setTempoSourceGroup(const QString& group) {
+    qWarning() << "MidiClockOutputManager::setTempoSourceGroup(" << group << ")";
     m_tempoSourceGroup = group;
     rebuildTempoSourceConnections();
     m_generator.requestRealign();
@@ -115,8 +118,12 @@ void MidiClockOutputManager::rebuildTempoSourceConnections() {
     m_masterPlayControls.clear();
 
     if (m_tempoSourceGroup.isEmpty()) {
+        qWarning() << "MidiClockOutputManager::rebuildTempoSourceConnections() -- "
+                      "tempoSourceGroup is EMPTY, bailing out";
         return;
     }
+    qWarning() << "MidiClockOutputManager::rebuildTempoSourceConnections() -- "
+                  "wiring up group" << m_tempoSourceGroup;
 
     const QString group = (m_tempoSourceGroup == kMasterSourceName)
             ? kMasterTempoGroup
@@ -139,11 +146,16 @@ void MidiClockOutputManager::rebuildTempoSourceConnections() {
             }
             m_masterPlayControls.push_back(std::move(pPlayControl));
         }
+        qWarning() << "MidiClockOutputManager::rebuildTempoSourceConnections() -- "
+                      "[Master] source, anyPlaying =" << anyPlaying;
         m_generator.setPlaying(anyPlaying);
     } else {
         m_pPlayControl = std::make_unique<ControlProxy>(group, kPlayKey, this);
         m_pPlayControl->connectValueChanged(this, &MidiClockOutputManager::slotSourcePlayChanged);
-        m_generator.setPlaying(m_pPlayControl->get() > 0.0);
+        const bool playing = m_pPlayControl->get() > 0.0;
+        qWarning() << "MidiClockOutputManager::rebuildTempoSourceConnections() -- "
+                      "single-deck source, playing =" << playing;
+        m_generator.setPlaying(playing);
     }
 
     if (m_pBpmControl) {
