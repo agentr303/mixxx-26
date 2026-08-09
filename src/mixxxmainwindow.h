@@ -10,6 +10,7 @@
 #include "util/parented_ptr.h"
 
 class ControlObject;
+class ControlPushButton;
 class DlgDeveloperTools;
 class DlgPreferences;
 class DlgKeywheel;
@@ -164,5 +165,5 @@ class MixxxMainWindow : public QMainWindow {
     // in the fullScreenChanged handler, so the button reflects reality
     // even when fullscreen is toggled another way (Escape key, window
     // manager, --fullscreen startup flag).
-    std::unique_ptr<ControlObject> m_pFullScreenControl;
+    std::unique_ptr<ControlPushButton> m_pFullScreenControl;
 };
