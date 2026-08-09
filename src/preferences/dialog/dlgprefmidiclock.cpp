@@ -110,11 +110,6 @@ void DlgPrefMidiClock::slotUpdate() {
     if (sourceIdx >= 0) {
         m_pTempoSourceCombo->setCurrentIndex(sourceIdx);
     }
-    // setCurrentIndex() above is a no-op (and silently fires no signal)
-    // when the target index is already selected -- e.g. "[Master]" is
-    // always index 0 and gets auto-selected the moment the combo is
-    // repopulated. Explicitly push the current selection through
-    // regardless, so the manager's tempo source is never left unset.
     m_pMidiClockOutputManager->setTempoSourceGroup(m_pTempoSourceCombo->currentText());
 
     const bool sendTransport = m_pConfig->getValue(kSendTransportKey, true);
