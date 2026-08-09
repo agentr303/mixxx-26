@@ -157,4 +157,12 @@ class MixxxMainWindow : public QMainWindow {
     mixxx::preferences::ScreenSaver m_inhibitScreensaver;
 
     QSet<ControlObject*> m_skinCreatedControls;
+
+    // Lets skins bind a fullscreen toggle button, since fullscreen is
+    // otherwise pure QMainWindow window-state (isFullScreen()) with no
+    // ControlObject backing it. Kept in sync with actual window state
+    // in the fullScreenChanged handler, so the button reflects reality
+    // even when fullscreen is toggled another way (Escape key, window
+    // manager, --fullscreen startup flag).
+    std::unique_ptr<ControlObject> m_pFullScreenControl;
 };
