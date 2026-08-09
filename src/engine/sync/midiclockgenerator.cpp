@@ -26,13 +26,20 @@ MidiClockGenerator::MidiClockGenerator()
           m_wasEnabled(false),
           m_wasPlaying(false),
           m_samplesUntilNextTick(0.0),
-          m_lastSamplesPerTick(0.0) {
+          m_lastSamplesPerTick(0.0),
+          m_ticksSinceBeat(0),
+          m_beatsSinceBar(0) {
+    m_pBeatIndicator = std::make_unique<ControlObject>(ConfigKey("[MidiClock]", "beat_indicator"));
+    m_pBarIndicator = std::make_unique<ControlObject>(ConfigKey("[MidiClock]", "bar_indicator"));
 }
 
 void MidiClockGenerator::setEnabled(bool enabled) {
     m_enabled.store(enabled, std::memory_order_relaxed);
     if (enabled) {
         requestRealign();
+    } else {
+        m_pBeatIndicator->set(0.0);
+        m_pBarIndicator->set(0.0);
     }
 }
 
@@ -80,6 +87,8 @@ void MidiClockGenerator::process(int sampleRate,
     // the way clock ticks are.
     if (!m_wasEnabled || realign) {
         m_samplesUntilNextTick = 0.0; // emit a tick immediately -> phase 0
+        m_ticksSinceBeat = 0;
+        m_beatsSinceBar = 0;
         if (sendTransport && playing) {
             m_queue.push({bufferStartTime, kMidiStart});
         }
@@ -132,6 +141,15 @@ void MidiClockGenerator::process(int sampleRate,
                 std::chrono::duration_cast<std::chrono::steady_clock::duration>(
                         std::chrono::duration<double>(secondsIntoBuffer));
         m_queue.push({tickTime, kMidiTimingClock});
+
+        if (++m_ticksSinceBeat >= kPulsesPerQuarterNote) {
+            m_ticksSinceBeat = 0;
+            m_pBeatIndicator->set(m_pBeatIndicator->get() > 0.0 ? 0.0 : 1.0);
+            if (++m_beatsSinceBar >= 4) {
+                m_beatsSinceBar = 0;
+                m_pBarIndicator->set(m_pBarIndicator->get() > 0.0 ? 0.0 : 1.0);
+            }
+        }
 
         // Recompute in case BPM changed intra-buffer (it won't in
         // practice since setBpm() is called at most once per engine
