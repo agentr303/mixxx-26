@@ -33,6 +33,8 @@
 #include "broadcast/broadcastmanager.h"
 #endif
 #include "control/controlindicatortimer.h"
+#include "control/controlobject.h"
+#include "control/controlpushbutton.h"
 #include "library/library.h"
 #include "library/library_decl.h"
 #include "library/library_prefs.h"
@@ -855,6 +857,29 @@ void MixxxMainWindow::connectMenuBar() {
             Qt::UniqueConnection);
     // Refresh the Fullscreen checkbox for the case we went fullscreen earlier
     m_pMenuBar->onFullScreenStateChange(isFullScreen());
+
+    // Lets skins bind a fullscreen toggle button. There is no
+    // ControlObject backing fullscreen state otherwise -- it's plain
+    // QMainWindow window state (isFullScreen()/showFullScreen()/
+    // showNormal()). This control drives slotViewFullScreen() when a
+    // skin button is clicked, and is kept in sync by fullScreenChanged
+    // below so the button reflects reality even when fullscreen is
+    // toggled another way (Escape key, window manager, --fullscreen
+    // startup flag, or the menu checkbox itself).
+    m_pFullScreenControl = std::make_unique<ControlPushButton>(ConfigKey("[Master]", "fullscreen"));
+    m_pFullScreenControl->setButtonMode(mixxx::control::ButtonMode::Toggle);
+    m_pFullScreenControl->setAndConfirm(isFullScreen() ? 1.0 : 0.0);
+    connect(m_pFullScreenControl.get(),
+            &ControlObject::valueChanged,
+            this,
+            [this](double value) { slotViewFullScreen(value > 0.0); });
+    connect(this,
+            &MixxxMainWindow::fullScreenChanged,
+            this,
+            [this](bool fullscreen) {
+                m_pFullScreenControl->setAndConfirm(fullscreen ? 1.0 : 0.0);
+            },
+            Qt::UniqueConnection);
 
     // Keyboard shortcuts
     connect(m_pMenuBar,
