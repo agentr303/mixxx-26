@@ -34,7 +34,9 @@
 #include <QAtomicInteger>
 #include <atomic>
 #include <chrono>
+#include <memory>
 
+#include "control/controlobject.h"
 #include "engine/sync/midiclockqueue.h"
 
 class MidiClockGenerator {
@@ -99,4 +101,17 @@ class MidiClockGenerator {
     // regardless of buffer-size jitter from the OS audio backend.
     double m_samplesUntilNextTick;
     double m_lastSamplesPerTick;
+
+    // GUI-facing pulse indicators, toggled 0/1 on every beat / bar
+    // boundary so a skin can flash a light in sync with the outgoing
+    // clock. Constructed on the GUI thread (this object is a plain
+    // member of MidiClockOutputManager, which lives on the GUI
+    // thread), but set() is called from the audio thread in
+    // process() -- ControlObject::set() is real-time-safe, matching
+    // how the rest of the engine already updates ControlObjects from
+    // the audio callback.
+    std::unique_ptr<ControlObject> m_pBeatIndicator;
+    std::unique_ptr<ControlObject> m_pBarIndicator;
+    int m_ticksSinceBeat;
+    int m_beatsSinceBar;
 };
