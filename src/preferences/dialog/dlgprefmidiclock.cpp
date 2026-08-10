@@ -49,16 +49,25 @@ DlgPrefMidiClock::DlgPrefMidiClock(QWidget* pParent,
     connect(m_pEnabledCheckbox, &QCheckBox::toggled, this, &DlgPrefMidiClock::slotEnabledToggled);
     connect(m_pOutputDeviceCombo,
             &QComboBox::currentTextChanged,
-            m_pMidiClockOutputManager,
-            &MidiClockOutputManager::setOutputDevice);
+            this,
+            [this](const QString& device) {
+                m_pConfig->setValue(kOutputDeviceKey, device);
+                m_pMidiClockOutputManager->setOutputDevice(device);
+            });
     connect(m_pTempoSourceCombo,
             &QComboBox::currentTextChanged,
-            m_pMidiClockOutputManager,
-            &MidiClockOutputManager::setTempoSourceGroup);
+            this,
+            [this](const QString& group) {
+                m_pConfig->setValue(kTempoSourceKey, group);
+                m_pMidiClockOutputManager->setTempoSourceGroup(group);
+            });
     connect(m_pSendTransportCheckbox,
             &QCheckBox::toggled,
-            m_pMidiClockOutputManager,
-            &MidiClockOutputManager::setSendTransport);
+            this,
+            [this](bool checked) {
+                m_pConfig->setValue(kSendTransportKey, checked);
+                m_pMidiClockOutputManager->setSendTransport(checked);
+            });
 
     slotUpdate();
 }
@@ -70,6 +79,7 @@ void DlgPrefMidiClock::slotEnabledToggled(bool checked) {
     if (checked) {
         refreshDeviceList();
     }
+    m_pConfig->setValue(kEnabledKey, checked);
     m_pMidiClockOutputManager->setEnabled(checked);
 }
 
