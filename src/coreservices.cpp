@@ -288,9 +288,6 @@ void CoreServices::initialize(QApplication* pApp) {
             m_pEffectsManager.get(),
             pChannelHandleFactory,
             true);
-    m_pMidiClockOutputManager = std::make_shared<MidiClockOutputManager>(m_pControllerManager.get());
-    m_pEngine->setMidiClockGenerator(m_pMidiClockOutputManager->generator());
-    m_pControllerManager->setMidiClockOutputManager(m_pMidiClockOutputManager.get());
 #ifdef __RUBBERBAND__
     RubberBandWorkerPool::createInstance(pConfig);
 #endif
